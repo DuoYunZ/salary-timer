@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>摸鱼时薪计算器</title>
+    <link rel="icon" href="images/donkey.png" type="image/png">
+    <meta name="description" content="一个可爱的时薪计算器，帮助你追踪工作时间和实际收益">
+    <meta name="keywords" content="时薪计算器,工资计算,摸鱼计时器">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Comic Sans MS", "微软雅黑", sans-serif;
+            background-color: #FFF4D2;
+            min-height: 100vh;
+            user-select: none;
+        }
+        .rate-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #FFB6C1;
+            padding: 12px 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-size: 18px;
+            color: #444;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 400px;
+            margin: 60px auto 0;
+            border: 3px solid #FFB6C1;
+        }
+        .clock {
+            width: 240px;
+            height: 240px;
+            border: 4px solid #FFB6C1;
+            border-radius: 50%;
+            position: relative;
+            margin: 40px auto;
+            background-color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255,182,193,0.3);
+            transition: transform 0.3s;
+        }
+        .clock:hover {
+            transform: scale(1.02);
+        }
+        .second-hand {
+            display: none;
+        }
+        .calculator {
+            display: none;
+            margin-top: 20px;
+        }
+        .calculator.show {
+            display: block;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .work-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 20px;
+            background-color: #87CEEB;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(135,206,235,0.3);
+            font-weight: bold;
+        }
+        .work-button:hover {
+            background-color: #75bcd9;
+            transform: translateY(-2px);
+        }
+        .work-button.working {
+            background-color: #FF9999;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .earnings {
+            text-align: center;
+            font-size: 24px;
+            margin-top: 20px;
+            color: #FF69B4;
+            display: none;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .earnings.show {
+            display: block;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .bubble {
+            position: fixed;
+            background-color: #FFB6C1;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            display: none;
+            animation: popIn 0.5s ease-out;
+            z-index: 1000;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255,182,193,0.3);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .fish-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 20px;
+            background-color: #98FB98;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(152,251,152,0.3);
+            font-weight: bold;
+            display: none;
+        }
+        .fish-button.show {
+            display: block;
+        }
+        .fish-button:hover {
+            background-color: #85e085;
+            transform: translateY(-2px);
+        }
+        .fish-button.fishing {
+            background-color: #FFA500;
+            animation: wiggle 1s infinite;
+        }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0); }
+            25% { transform: rotate(-1deg); }
+            75% { transform: rotate(1deg); }
+        }
+        .effective-rate {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background-color: #FFA500;
+            padding: 12px 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-size: 18px;
+            color: white;
+            display: none;
+            animation: float 3s ease-in-out infinite;
+        }
+        .effective-rate.show {
+            display: block;
+        }
+        .donkey {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            left: calc(50% - 20px);
+            top: -50px;
+            transform-origin: 50% 170px;
+            background: url('images/donkey.png') no-repeat;
+            background-size: 120px 120px;
+            animation: none;
+        }
+
+        .donkey.working {
+            animation: 
+                walk 0.8s steps(3) infinite,
+                row-change 2.4s steps(3) infinite,
+                circle 8s linear infinite;
+        }
+
+        @keyframes walk {
+            from {
+                background-position-x: 0;
+            }
+            to {
+                background-position-x: -120px;
+            }
+        }
+
+        @keyframes row-change {
+            from {
+                background-position-y: 0;
+            }
+            to {
+                background-position-y: -120px;
+            }
+        }
+
+        @keyframes circle {
+            0% {
+                transform: translate(0, 0) rotate(0deg) translate(0, 0);
+            }
+            100% {
+                transform: translate(0, 0) rotate(360deg) translate(0, 0);
+            }
+        }
+
+        /* 添加日历按钮样式 */
+        .calendar-button {
+            position: fixed;
+            top: 140px;
+            right: 20px;
+            background-color: #DDA0DD;
+            padding: 12px 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-size: 18px;
+            color: white;
+            cursor: pointer;
+            border: none;
+            width: auto;
+            transition: all 0.3s;
+            animation: float 3s ease-in-out infinite;
+        }
+        .calendar-button:hover {
+            background-color: #c77fc7;
+            transform: translateY(-2px);
+        }
+
+        /* 日历界面样式 */
+        .calendar-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .calendar-modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .calendar-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 30px;
+            width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 3px solid #DDA0DD;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+
+        .calendar-day {
+            border: 2px solid #FFE4E1;
+            padding: 15px;
+            min-height: 80px;
+            border-radius: 15px;
+            transition: all 0.3s;
+            background-color: white;
+            font-family: "Comic Sans MS", "微软雅黑", sans-serif;
+        }
+        .calendar-day:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .calendar-day.today {
+            background-color: #FFF0F5;
+            border-color: #DDA0DD;
+        }
+        .calendar-day .date {
+            font-size: 18px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .calendar-day .stats {
+            font-size: 16px;
+            color: #FF69B4;
+            font-weight: bold;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #FFB6C1;
+            border-radius: 15px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: #FFF5F5;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #FF69B4;
+            box-shadow: 0 0 10px rgba(255,105,180,0.2);
+        }
+
+        /* 确认按钮样式 */
+        #calculateBtn {
+            width: 100%;
+            padding: 15px;
+            font-size: 20px;
+            background-color: #FFB6C1;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255,182,193,0.3);
+            font-weight: bold;
+        }
+        #calculateBtn:hover {
+            background-color: #FF99B3;
+            transform: translateY(-2px);
+        }
+
+        /* 日历翻页按钮样式 */
+        .calendar-header button {
+            background-color: #FFB6C1;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(255,182,193,0.3);
+            font-weight: bold;
+            width: auto;
+        }
+        .calendar-header button:hover {
+            background-color: #FF99B3;
+            transform: translateY(-2px);
+        }
+
+        /* 日历标题样式 */
+        .calendar-header h2 {
+            font-size: 24px;
+            color: #FF69B4;
+            margin: 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="rateDisplay" class="rate-display">时薪: ¥0.00/小时</div>
+    <div id="effectiveRate" class="effective-rate">实际时薪: ¥0.00/小时</div>
+    <button id="calendarButton" class="calendar-button">查看日历</button>
+    <div id="bubble" class="bubble"></div>
+    
+    <div class="container">
+        <div id="clock" class="clock">
+            <div class="donkey"></div>
+        </div>
+        <button id="workButton" class="work-button">开始工作</button>
+        <button id="fishButton" class="fish-button">摸鱼</button>
+        <div id="earnings" class="earnings">当前收益: ¥0.00</div>
+        
+        <div id="calculator" class="calculator show">
+            <div class="input-group">
+                <label>月薪 (¥)</label>
+                <input type="number" id="monthlySalary" placeholder="请输入月薪">
+            </div>
+            <div class="input-group">
+                <label>本月工作天数</label>
+                <input type="number" id="workDays" placeholder="请输入工作天数">
+            </div>
+            <button id="calculateBtn">确认</button>
+        </div>
+    </div>
+
+    <!-- 添加日历模态框 -->
+    <div id="calendarModal" class="calendar-modal">
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <button id="prevMonth">&lt;</button>
+                <h2 id="currentMonth">2024年1月</h2>
+                <button id="nextMonth">&gt;</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- 日历格子将通过 JavaScript 动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let hourlyRate = 0;
+        let isWorking = false;
+        let isFishing = false;
+        let workStartTime = null;
+        let fishStartTime = null;
+        let totalFishTime = 0;
+        let earningsUpdateInterval = null;
+        let rotation = 0;
+        let animationFrame;
+
+        // 添加日历相关变量
+        let currentDate = new Date();
+        let dailyStats = {};
+
+        const workButton = document.getElementById('workButton');
+        const fishButton = document.getElementById('fishButton');
+        const calculator = document.getElementById('calculator');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const rateDisplay = document.getElementById('rateDisplay');
+        const effectiveRate = document.getElementById('effectiveRate');
+        const earnings = document.getElementById('earnings');
+        const clock = document.getElementById('clock');
+        const donkey = document.querySelector('.donkey');
+
+        // 时钟点击事件
+        clock.addEventListener('click', () => {
+            calculator.classList.toggle('show');
+        });
+
+        // 工作按钮点击事件
+        workButton.addEventListener('click', () => {
+            if (!hourlyRate) {
+                alert('请先设置时薪！');
+                return;
+            }
+
+            isWorking = !isWorking;
+            workButton.classList.toggle('working');
+            earnings.classList.toggle('show');
+            fishButton.classList.toggle('show');
+            donkey.classList.toggle('working');
+            
+            if (isWorking) {
+                workButton.textContent = '工作中...';
+                workStartTime = new Date();
+                totalFishTime = 0;
+                updateEarnings();
+                earningsUpdateInterval = setInterval(updateEarnings, 1000);
+                if (!animationFrame) {
+                    updateClock();
+                }
+            } else {
+                workButton.textContent = '下班了';
+                fishButton.classList.remove('show');
+                effectiveRate.classList.remove('show');
+                clearInterval(earningsUpdateInterval);
+                if (animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                    animationFrame = null;
+                }
+                setTimeout(() => {
+                    workButton.textContent = '开始工作';
+                    earnings.classList.remove('show');
+                    workButton.classList.remove('working');
+                }, 3000);
+            }
+        });
+
+        // 摸鱼按钮点击事件
+        fishButton.addEventListener('click', () => {
+            isFishing = !isFishing;
+            fishButton.classList.toggle('fishing');
+            
+            if (isFishing) {
+                fishButton.textContent = '摸鱼中...';
+                fishStartTime = new Date();
+                effectiveRate.classList.add('show');
+            } else {
+                fishButton.textContent = '摸鱼';
+                if (fishStartTime) {
+                    totalFishTime += (new Date() - fishStartTime) / 1000;
+                }
+                fishStartTime = null;
+            }
+        });
+
+        // 计算按钮点击事件
+        calculateBtn.addEventListener('click', () => {
+            const monthlySalary = parseFloat(document.getElementById('monthlySalary').value);
+            const workDays = parseFloat(document.getElementById('workDays').value);
+            
+            if (monthlySalary && workDays) {
+                hourlyRate = monthlySalary / (workDays * 8);
+                rateDisplay.textContent = `时薪: ¥${hourlyRate.toFixed(2)}/小时`;
+                calculator.classList.remove('show');
+            }
+        });
+
+        // 更新日历视图
+        function updateCalendarView() {
+            generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+        }
+
+        // 更新收益显示
+        function updateEarnings() {
+            if (!isWorking || !workStartTime) return;
+            
+            const now = new Date();
+            const elapsedHours = (now - workStartTime) / (1000 * 3600);  // 总工作时长（小时）
+            let currentFishHours = totalFishTime / 3600;  // 总摸鱼时长（小时）
+            
+            if (isFishing && fishStartTime) {
+                currentFishHours += (now - fishStartTime) / (1000 * 3600);
+            }
+
+            // 计算实际时薪（基于8小时工作制）
+            const workingHours = 8;  // 标准8小时工作制
+            const effectiveWorkingHours = Math.max(workingHours - currentFishHours, 1);  // 扣除摸鱼时间后的实际工作时间
+            const effectiveHourlyRate = hourlyRate * (workingHours / effectiveWorkingHours);
+            
+            // 计算总收入（按原始时薪计算）
+            const currentEarnings = hourlyRate * elapsedHours;
+
+            // 添加调试信息
+            console.log('--------------------');
+            console.log(`时薪: ¥${hourlyRate.toFixed(2)}/小时`);
+            console.log(`总工作时长: ${(elapsedHours * 60).toFixed(2)}分钟`);
+            console.log(`摸鱼时长: ${(currentFishHours * 60).toFixed(2)}分钟`);
+            console.log(`实际工作时长: ${(effectiveWorkingHours).toFixed(2)}小时`);
+            console.log(`时薪倍率: ${(effectiveHourlyRate / hourlyRate).toFixed(2)}`);
+            console.log(`当前收益: ¥${currentEarnings.toFixed(2)}`);
+
+            // 更新显示
+            rateDisplay.textContent = `时薪: ¥${hourlyRate.toFixed(2)}/小时`;
+            effectiveRate.textContent = `实际时薪: ¥${effectiveHourlyRate.toFixed(2)}/小时`;
+            earnings.textContent = `当前收益: ¥${currentEarnings.toFixed(2)}`;
+
+            // 更新今日统计数据
+            updateTodayStats(effectiveHourlyRate, currentEarnings, elapsedHours * 3600, currentFishHours * 3600);
+        }
+
+        // 更新时钟
+        function updateClock() {
+            animationFrame = requestAnimationFrame(updateClock);
+            
+            const now = new Date();
+            if (now.getSeconds() === 0 && isWorking) {
+                showEarningBubble();
+            }
+        }
+
+        // 显示收益气泡
+        function showEarningBubble() {
+            if (hourlyRate > 0) {
+                const minuteEarning = hourlyRate / 60;
+                const bubble = document.getElementById('bubble');
+                bubble.textContent = `这一分钟收入: ¥${minuteEarning.toFixed(2)}`;
+                bubble.style.display = 'block';
+                
+                // 设置气泡位置
+                const clock = document.getElementById('clock');
+                const clockRect = clock.getBoundingClientRect();
+                bubble.style.left = `${clockRect.left + clockRect.width / 2}px`;
+                bubble.style.top = `${clockRect.bottom + 10}px`;
+                bubble.style.transform = 'translateX(-50%)';
+                
+                setTimeout(() => {
+                    bubble.style.display = 'none';
+                }, 2000);
+            }
+        }
+
+        // 防止文本选择
+        document.addEventListener('selectstart', (e) => e.preventDefault());
+
+        // 加载历史数据
+        function loadDailyStats() {
+            const savedStats = localStorage.getItem('dailyStats');
+            if (savedStats) {
+                dailyStats = JSON.parse(savedStats);
+            }
+        }
+
+        // 保存历史数据
+        function saveDailyStats() {
+            localStorage.setItem('dailyStats', JSON.stringify(dailyStats));
+        }
+
+        // 更新当天的统计数据
+        function updateTodayStats(effectiveRate, totalEarnings, workTime, fishTime) {
+            const today = new Date().toISOString().split('T')[0];
+            if (!dailyStats[today]) {
+                dailyStats[today] = {
+                    effectiveRate: 0,
+                    totalEarnings: 0,
+                    workTime: 0,
+                    fishTime: 0,
+                    updates: 0
+                };
+            }
+
+            const stats = dailyStats[today];
+            stats.updates++;
+            stats.effectiveRate = ((stats.effectiveRate * (stats.updates - 1)) + effectiveRate) / stats.updates;
+            stats.totalEarnings = Math.max(stats.totalEarnings, totalEarnings);
+            stats.workTime = Math.max(stats.workTime, workTime);
+            stats.fishTime = Math.max(stats.fishTime, fishTime);
+
+            saveDailyStats();
+            updateCalendarView();
+        }
+
+        // 生成日历视图
+        function generateCalendar(year, month) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDay = firstDay.getDay();
+            const totalDays = lastDay.getDate();
+            
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            // 添加星期标题
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            weekdays.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'calendar-day';
+                dayHeader.style.minHeight = '30px';
+                dayHeader.textContent = day;
+                calendarGrid.appendChild(dayHeader);
+            });
+
+            // 添加空白天数
+            for (let i = 0; i < startDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day';
+                calendarGrid.appendChild(emptyDay);
+            }
+
+            // 添加日期
+            for (let i = 1; i <= totalDays; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const isToday = currentDateStr === new Date().toISOString().split('T')[0];
+                
+                if (isToday) {
+                    dayElement.classList.add('today');
+                }
+
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'date';
+                dateDiv.textContent = i;
+                dayElement.appendChild(dateDiv);
+
+                const stats = dailyStats[currentDateStr];
+                if (stats) {
+                    const statsDiv = document.createElement('div');
+                    statsDiv.className = 'stats';
+                    statsDiv.innerHTML = `¥${stats.effectiveRate.toFixed(0)}`;
+                    dayElement.appendChild(statsDiv);
+                }
+
+                calendarGrid.appendChild(dayElement);
+            }
+
+            // 更新月份显示
+            document.getElementById('currentMonth').textContent = `${year}年${month + 1}月`;
+        }
+
+        // 初始化日历功能
+        function initCalendar() {
+            loadDailyStats();
+            generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+
+            // 绑定月份切换按钮事件
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+            });
+
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+            });
+
+            // 绑定日历按钮点击事件
+            document.getElementById('calendarButton').addEventListener('click', () => {
+                document.getElementById('calendarModal').classList.add('show');
+            });
+
+            // 点击模态框背景关闭
+            document.getElementById('calendarModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('calendarModal')) {
+                    document.getElementById('calendarModal').classList.remove('show');
+                }
+            });
+        }
+
+        // 初始化
+        window.onload = function() {
+            initCalendar();
+            // ... 其他初始化代码 ...
+        };
+    </script>
+</body>
+</html> 
